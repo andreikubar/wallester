@@ -1,0 +1,41 @@
+<script>
+    function page(inc) {
+        let queryParams = new URLSearchParams(window.location.search);
+        let page = parseInt(queryParams.get("Page"))
+        queryParams.set("Page", page + inc);
+        history.pushState(null, null, "?"+queryParams.toString());
+    }
+</script>
+<h1>Customers</h1>
+<form id="filterForm">
+    <label for="FirstName">First name</label>
+    <input type="text" id="FirstName" name="FirstName" value="{{.Filter.FirstName}}"/>
+    <label for="LastName">Last name</label>
+    <input type="text" id="LastName" name="LastName" value="{{.Filter.LastName}}"/>
+    <input type="hidden" id="Page" name="Page" value="0"/>
+    <input type="submit" value="Search"/>
+</form>
+<div style="text-align: center;">
+<table>
+    <tr>
+        <th>Frist name</th>
+        <th>Last name</th>
+        <th>Birth date</th>
+        <th>Gender</th>
+        <th>E-mail</th>
+        <th>Address</th>
+    </tr>
+    {{range .Customers}}
+    <tr>
+        <td>{{.FirstName}}</td>
+        <td>{{.LastName}}</td>
+        <td>{{.BirthDate.Format "Jan 02, 2006"}}</td>
+        <td>{{.Gender}}</td>
+        <td>{{.EMail}}</td>
+        <td>{{.Address}}</td>
+    </tr>
+    {{end}}
+</table>
+<a href="" onclick="page(-1)">&lt; previous</a>
+<a href="" onclick="page(1)">next &gt;</a>
+</div>
