@@ -15,9 +15,9 @@ func (r *PgRepository) AddNewCustomer(customer *Customer) uint {
 	return customer.Id
 }
 
-func (r *PgRepository) UpdateCustomer(id uint, updateValues *Customer) *Customer {
+func (r *PgRepository) UpdateCustomer(id uint, updateValues *Customer, keys []string) *Customer {
 	var customer Customer = Customer{Id: id}
-	result := DbConn.Debug().Model(&customer).Updates(updateValues)
+	result := DbConn.Debug().Model(&customer).Select(keys).Updates(updateValues)
 	util.CheckError(result.Error)
 	customerUpdated := r.GetCustomer(id)
 	return customerUpdated

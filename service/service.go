@@ -9,7 +9,7 @@ type IService interface {
 	GetCustomer(id uint) *db.Customer
 	FindCustomers(firstName string, lastName string, offset int, sort string) []db.Customer
 	AddNewCustomer(customer *db.Customer) (uint, []error)
-	UpdateCustomer(id uint, updateValues *dto.CustomerUpdateDto) (*db.Customer, []error)
+	UpdateCustomer(id uint, updateValues *dto.CustomerUpdateDto, keys []string) (*db.Customer, []error)
 }
 
 type Service struct {
@@ -41,7 +41,7 @@ func (this *Service) AddNewCustomer(customer *db.Customer) (uint, []error) {
 }
 
 func (this *Service) UpdateCustomer(id uint,
-	updateValues *dto.CustomerUpdateDto) (*db.Customer, []error) {
+	updateValues *dto.CustomerUpdateDto, keys []string) (*db.Customer, []error) {
 	if validationErrors := updateValues.Validate(); validationErrors != nil {
 		var errors []error
 		for i := 0; i < len(validationErrors); i++ {
@@ -49,5 +49,5 @@ func (this *Service) UpdateCustomer(id uint,
 		}
 		return nil, errors
 	}
-	return this.repo.UpdateCustomer(id, updateValues.ToCustomer()), nil
+	return this.repo.UpdateCustomer(id, updateValues.ToCustomer(), keys), nil
 }

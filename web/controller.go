@@ -94,9 +94,10 @@ func (this *Controller) edit(writer http.ResponseWriter, request *http.Request) 
 		err = templ.Execute(writer, customer)
 		util.CheckError(err)
 	} else if request.Method == "POST" {
-		updateValues := getUpdateCustomerData(request)
+		updateValues := getCustomerDataForUpdate(request)
+		keys := getFormKeys(request)
 		id64, _ := strconv.ParseUint(request.Form.Get("Id"), 10, 32)
-		customer, errors := this.service.UpdateCustomer(uint(id64), updateValues)
+		customer, errors := this.service.UpdateCustomer(uint(id64), updateValues, keys)
 		if errors != nil {
 			displayValidationErrors(writer, errors)
 			return
@@ -119,7 +120,7 @@ func getCustomerData(request *http.Request) *db.Customer {
 	}
 }
 
-func getUpdateCustomerData(request *http.Request) *dto.CustomerUpdateDto {
+func getCustomerDataForUpdate(request *http.Request) *dto.CustomerUpdateDto {
 	firstName, lastName, birthDate, gender, eMail, address := getFormValues(request)
 	return &dto.CustomerUpdateDto{
 		FirstName: firstName,
@@ -142,6 +143,16 @@ func getFormValues(request *http.Request) (firstName string, lastName string,
 	eMail = request.Form.Get("EMail")
 	address = request.Form.Get("Address")
 	return
+}
+
+func getFormKeys(request *http.Request) []string {
+	var keys []string
+	for k := range request.Form {
+		if k != "Id" {
+			keys = append(keys, k)
+		}
+	}
+	return keys
 }
 
 func getCustomerIdFromQuery(request *http.Request) uint {

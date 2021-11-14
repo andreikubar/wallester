@@ -12,7 +12,7 @@ const (
 )
 
 func main() {
-	fmt.Printf("Starting web service on %d\n", port)
+	fmt.Printf("Starting web service at http://localhost:%d\n", port)
 	repo := &db.PgRepository{}
 	service := service.New(repo)
 	controller := web.New(service, port)
