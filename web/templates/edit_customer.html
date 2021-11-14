@@ -1,0 +1,60 @@
+<script>
+    var changedFields = new Map();
+    
+    function registerChange(name){
+        changedFields.set(name, 1);
+    }
+    
+    function disableUnchangedFields() {
+        var inputs = document.getElementsByTagName("input")
+        for (i = 0; i < inputs.length; i++) {
+            disabledUnchangedElement(inputs[i])
+        }
+        var selects = document.getElementsByTagName("select")
+        for (i = 0; i < selects.length; i++) {
+            disabledUnchangedElement(selects[i])
+        }
+    }
+    
+    function disabledUnchangedElement(element) {
+        if (!isChanged(element.name)) {
+                element.disabled = true;
+            }
+    }
+
+    function isChanged(name) {
+        return changedFields.has(name)
+    }
+</script>
+<h1>Edit customer</h1>
+<form onSubmit="disableUnchangedFields()" id="customerForm" method="POST">
+    <input type="hidden" name="Id" value="{{.Id}}" />
+    <div>
+        <label for="FirstName">First name</label>
+        <input onchange="registerChange('FirstName')" type="text" id="FirstName" name="FirstName" value="{{.FirstName}}" />
+    </div>
+    <div>
+        <label for="LastName">Last name</label>
+        <input onchange="registerChange('LastName')" type="text" id="LastName" name="LastName" value="{{.LastName}}" />
+    </div>
+    <div>
+        <label for=" BirthDate">Birth date</label>
+        <input onchange="registerChange('BirthDate')" type="date" id="BirthDate" name="BirthDate" value="{{.BirthDate.Format "2006-01-02"}}" />
+    </div>
+    <div>
+        <label for="Gender">Gender</label>
+        <select onchange="registerChange('Gender')" id="Gender" name="Gender">
+            <option value="M" {{if (eq .Gender "M" ) }}selected="selected"{{end}}>Male</option>
+            <option value="F" {{if (eq .Gender "F" ) }}selected="selected"{{end}}>Female</option>
+        </select>
+    </div>
+    <div>
+        <label for="EMail">E-Mail</label>
+        <input onchange="registerChange('EMail')" type="email" id="EMail" name="EMail" value={{.EMail}} />
+    </div>
+    <div>
+        <label for="Address">Address</label>
+        <input onchange="registerChange('Address')" type="text" id="Address" name="Address" value={{.Address}} />
+    </div>
+    <input type="submit" value="submit"/>
+</form>

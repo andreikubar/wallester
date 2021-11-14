@@ -10,7 +10,7 @@ Edit the database connection parameters in `db/connection.go`
 
 ```
 cd db_init
-go run gorm_init.go
+go run initDb.go
 ```
 
 ## Start the server

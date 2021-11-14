@@ -5,54 +5,153 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
+	"time"
 	"wallester/db"
+	"wallester/dto"
+	"wallester/service"
 	"wallester/util"
 )
 
-type PageData struct {
+type Controller struct {
+	service service.IService
+	port    uint
+}
+
+type pageData struct {
 	Customers []db.Customer
-	Filter Filter
-	Page int
+	Filter    filter
 }
 
-type Filter struct {
+type filter struct {
 	FirstName string
-	LastName string
+	LastName  string
 }
 
-func hello (writer http.ResponseWriter, request *http.Request) {
-	fmt.Fprintf(writer, "Hello!\n")
+func New(service service.IService, port uint) Controller {
+	return Controller{
+		service: service,
+		port:    port}
 }
 
-func add(writer http.ResponseWriter, request *http.Request) {
-
+func (this *Controller) Listen() {
+	http.Handle("/", http.RedirectHandler("/customer/search", 302))
+	http.HandleFunc("/customer/search", this.search)
+	http.HandleFunc("/customer/show", this.show)
+	http.HandleFunc("/customer/new", this.add)
+	http.HandleFunc("/customer/edit", this.edit)
+	http.ListenAndServe(fmt.Sprintf(":%d", this.port), nil)
 }
 
-func edit(writer http.ResponseWriter, request *http.Request) {
-
+func (this *Controller) show(writer http.ResponseWriter, request *http.Request) {
+	id := getCustomerIdFromQuery(request)
+	customer := this.service.GetCustomer(id)
+	templ := template.Must(template.ParseFiles("web/templates/show_customer.html"))
+	err := templ.Execute(writer, customer)
+	util.CheckError(err)
 }
 
-func search(writer http.ResponseWriter, request *http.Request) {
+func (this *Controller) search(writer http.ResponseWriter, request *http.Request) {
 	firstName := request.URL.Query().Get("FirstName")
 	lastName := request.URL.Query().Get("LastName")
 	page, _ := strconv.Atoi(request.URL.Query().Get("Page"))
-	customers:=db.FindCustomers(firstName, lastName, page)
-	tmpl, err := template.ParseFiles("web/list-customers.html")
+	sort := request.URL.Query().Get("Sort")
+	customers := this.service.FindCustomers(firstName, lastName, page, sort)
+	tmpl, err := template.ParseFiles("web/templates/list_customers.html")
 	util.CheckError(err)
-	pageData := PageData{
-		Customers: customers, 
-		Filter: Filter{FirstName: firstName, LastName: lastName},
-		Page: page,
+	pageData := pageData{
+		Customers: customers,
+		Filter:    filter{FirstName: firstName, LastName: lastName},
 	}
 	err = tmpl.Execute(writer, pageData)
 	util.CheckError(err)
 }
 
+func (this *Controller) add(writer http.ResponseWriter, request *http.Request) {
+	var err error
+	if request.Method == "GET" {
+		templ := template.Must(template.ParseFiles("web/templates/add_customer.html"))
+		err = templ.Execute(writer, nil)
+		util.CheckError(err)
+	} else if request.Method == "POST" {
+		customer := getCustomerData(request)
+		custId, errors := this.service.AddNewCustomer(customer)
+		if errors != nil {
+			displayValidationErrors(writer, errors)
+			return
+		}
+		templ := template.Must(template.ParseFiles("web/templates/add_customer_success.html"))
+		err = templ.Execute(writer, custId)
+		util.CheckError(err)
+	}
+}
 
-func Listen() {
-	http.HandleFunc("/hello", hello);
-	http.HandleFunc("/customer/new", add)
-	http.HandleFunc("/customer/edit", edit)
-	http.HandleFunc("/customer/search", search)
-	http.ListenAndServe(":8080", nil)
+func (this *Controller) edit(writer http.ResponseWriter, request *http.Request) {
+	var err error
+	if request.Method == "GET" {
+		id := getCustomerIdFromQuery(request)
+		customer := this.service.GetCustomer(id)
+		templ := template.Must(template.ParseFiles("web/templates/edit_customer.html"))
+		err = templ.Execute(writer, customer)
+		util.CheckError(err)
+	} else if request.Method == "POST" {
+		updateValues := getUpdateCustomerData(request)
+		id64, _ := strconv.ParseUint(request.Form.Get("Id"), 10, 32)
+		customer, errors := this.service.UpdateCustomer(uint(id64), updateValues)
+		if errors != nil {
+			displayValidationErrors(writer, errors)
+			return
+		}
+		templ := template.Must(template.ParseFiles("web/templates/show_customer.html"))
+		err = templ.Execute(writer, customer)
+		util.CheckError(err)
+	}
+}
+
+func getCustomerData(request *http.Request) *db.Customer {
+	firstName, lastName, birthDate, gender, eMail, address := getFormValues(request)
+	return &db.Customer{
+		FirstName: firstName,
+		LastName:  lastName,
+		BirthDate: birthDate,
+		Gender:    gender,
+		EMail:     eMail,
+		Address:   address,
+	}
+}
+
+func getUpdateCustomerData(request *http.Request) *dto.CustomerUpdateDto {
+	firstName, lastName, birthDate, gender, eMail, address := getFormValues(request)
+	return &dto.CustomerUpdateDto{
+		FirstName: firstName,
+		LastName:  lastName,
+		BirthDate: birthDate,
+		Gender:    gender,
+		EMail:     eMail,
+		Address:   address,
+	}
+}
+
+func getFormValues(request *http.Request) (firstName string, lastName string,
+	birthDate time.Time, gender string, eMail string, address string) {
+	err := request.ParseForm()
+	util.CheckError(err)
+	firstName = request.Form.Get("FirstName")
+	lastName = request.Form.Get("LastName")
+	birthDate, _ = time.Parse("2006-01-02", request.Form.Get("BirthDate"))
+	gender = request.Form.Get("Gender")
+	eMail = request.Form.Get("EMail")
+	address = request.Form.Get("Address")
+	return
+}
+
+func getCustomerIdFromQuery(request *http.Request) uint {
+	var id uint64
+	id, _ = strconv.ParseUint(request.URL.Query().Get("Id"), 10, 32)
+	return uint(id)
+}
+
+func displayValidationErrors(writer http.ResponseWriter, errors []error) {
+	templ := template.Must(template.ParseFiles("web/templates/display_errors.html"))
+	err := templ.Execute(writer, errors)
+	util.CheckError(err)
 }

@@ -1,0 +1,49 @@
+<script>
+    function page(inc) {
+        let queryParams = new URLSearchParams(window.location.search);
+        let page = (queryParams.get("Page") == null) ? 0 : parseInt(queryParams.get("Page"));
+        queryParams.set("Page", page + inc);
+        history.pushState(null, null, "?" + queryParams.toString());
+    }
+    function sort(column) {
+        let queryParams = new URLSearchParams(window.location.search);
+        queryParams.set("Sort", column);
+        history.pushState(null, null, "?" + queryParams.toString());
+    }
+</script>
+<h1>Customers</h1>
+<div style="margin-bottom: 20px;">
+    <a href="/customer/new">Add new</a>
+</div>  
+<form id="filterForm">
+    <label for="FirstName">First name</label>
+    <input type="text" id="FirstName" name="FirstName" value="{{.Filter.FirstName}}" />
+    <label for="LastName">Last name</label>
+    <input type="text" id="LastName" name="LastName" value="{{.Filter.LastName}}" />
+    <input type="hidden" id="Page" name="Page" value="0" />
+    <input type="submit" value="Search" />
+</form>
+<div style="text-align: center;">
+    <table>
+        <tr>
+            <th><a href="" onclick="sort('first_name')">Frist name</a></th>
+            <th><a href="" onclick="sort('last_name')">Last name</a></th>
+            <th><a href="" onclick="sort('birth_date')">Birth date</a></th>
+            <th><a href="" onclick="sort('gender')">Gender</a></th>
+            <th><a href="" onclick="sort('e_mail')">E-mail</a></th>
+            <th><a href="" onclick="sort('address')">Address</a></th>
+        </tr>
+        {{range .Customers}}
+        <tr>
+            <td><a href="/customer/show?Id={{.Id}}">{{.FirstName}}</a></td>
+            <td>{{.LastName}}</td>
+            <td>{{.BirthDate.Format "Jan 02, 2006"}}</td>
+            <td>{{.GenderStr}}</td>
+            <td>{{.EMail}}</td>
+            <td>{{.Address}}</td>
+        </tr>
+        {{end}}
+    </table>
+    <a href="" onclick="page(-1)">&lt; previous</a>
+    <a href="" onclick="page(1)">next &gt;</a>
+</div>

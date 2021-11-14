@@ -2,10 +2,19 @@ package main
 
 import (
 	"fmt"
+	"wallester/db"
+	"wallester/service"
 	"wallester/web"
 )
 
+const (
+	port = 8080
+)
+
 func main() {
-	fmt.Println("Starting web service on 8080")
-	web.Listen()
+	fmt.Printf("Starting web service on %d\n", port)
+	repo := &db.PgRepository{}
+	service := service.New(repo)
+	controller := web.New(service, port)
+	controller.Listen()
 }

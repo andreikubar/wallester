@@ -1,0 +1,30 @@
+<h1>Customer Data</h1>
+<div>
+    <span>First name:</span>
+    <span>{{.FirstName}}</span>
+</div>
+<div>
+    <span>Last name:</span>
+    <span>{{.LastName}}</span>
+</div>
+<div>
+    <span>Birth date:</span>
+    <span>{{.BirthDate.Format "Jan 02, 2006"}}</span>
+</div>
+<div>
+    <span>Gender:</span>
+    <span>{{.GenderStr}}</span>
+</div>
+<div>
+    <span>E-Mail:</span>
+    <span>{{.EMail}}</span>
+</div>
+<div>
+    <span>Address:</span>
+    <span>{{.Address}}</span>
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="/customer/edit?Id={{.Id}}">Edit</a>
+    <a href="/customer/search">Back to list</a>
+</div>
