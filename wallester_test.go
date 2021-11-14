@@ -3,7 +3,6 @@ package main
 import (
 	"testing"
 	"wallester/db"
-	"wallester/dto"
 	"wallester/service"
 	"wallester/test"
 
@@ -22,7 +21,7 @@ func TestAdd(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	testRepo := &test.TestRepository{}
 	service := service.New(testRepo)
-	_, errors := service.UpdateCustomer(1, &dto.CustomerUpdateDto{EMail: "xx@xx"}, []string{})
+	_, errors := service.UpdateCustomer(1, map[string]string{"EMail": "xx@xx"}, []string{})
 	errFound := false
 	for i := 0; i < len(errors); i++ {
 		fieldError := errors[i].(validator.FieldError)

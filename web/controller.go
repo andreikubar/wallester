@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 	"wallester/db"
-	"wallester/dto"
 	"wallester/service"
 	"wallester/util"
 )
@@ -94,10 +93,10 @@ func (this *Controller) edit(writer http.ResponseWriter, request *http.Request) 
 		err = templ.Execute(writer, customer)
 		util.CheckError(err)
 	} else if request.Method == "POST" {
-		updateValues := getCustomerDataForUpdate(request)
+		updateMap := getUpdateMap(request)
 		keys := getFormKeys(request)
 		id64, _ := strconv.ParseUint(request.Form.Get("Id"), 10, 32)
-		customer, errors := this.service.UpdateCustomer(uint(id64), updateValues, keys)
+		customer, errors := this.service.UpdateCustomer(uint(id64), updateMap, keys)
 		if errors != nil {
 			displayValidationErrors(writer, errors)
 			return
@@ -108,21 +107,21 @@ func (this *Controller) edit(writer http.ResponseWriter, request *http.Request) 
 	}
 }
 
+func getUpdateMap(request *http.Request) map[string]string {
+	err := request.ParseForm()
+	util.CheckError(err)
+	updateMap := make(map[string]string)
+	for k := range request.Form {
+		if k != "Id" {
+			updateMap[k] = request.Form[k][0]
+		}
+	}
+	return updateMap
+}
+
 func getCustomerData(request *http.Request) *db.Customer {
 	firstName, lastName, birthDate, gender, eMail, address := getFormValues(request)
 	return &db.Customer{
-		FirstName: firstName,
-		LastName:  lastName,
-		BirthDate: birthDate,
-		Gender:    gender,
-		EMail:     eMail,
-		Address:   address,
-	}
-}
-
-func getCustomerDataForUpdate(request *http.Request) *dto.CustomerUpdateDto {
-	firstName, lastName, birthDate, gender, eMail, address := getFormValues(request)
-	return &dto.CustomerUpdateDto{
 		FirstName: firstName,
 		LastName:  lastName,
 		BirthDate: birthDate,
